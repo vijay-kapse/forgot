@@ -104,6 +104,22 @@ Lift is always measured from the single strongest pairing, never from the combin
 
 **Recency.** A repo's shape changes. Commits decay with a 180-day half-life, so a pairing that held for 200 commits three years ago and none since loses to one that has held all month. This is why the headline percentage and the all-time counts differ, and the report says so.
 
+**Thresholds are measured, not chosen.** `bench/sweep.py` sweeps them across all
+seven repos. The lift floor is 1.2 because 1.0 through 1.5 score identically on
+real repos — their base rates are too low for the guard to bind — while 2.0 and
+above starts costing real coverage:
+
+| min_lift | min_confidence | coverage | precision@5 | hit-rate@5 |
+|---|---|---|---|---|
+| 1.2 | 0.3 | 62% | 53% | 69% |
+| **1.2** | **0.4** | **51%** | **59%** | **71%** |
+| 1.2 | 0.5 | 41% | 62% | 72% |
+| 2.0 | 0.4 | 46% | 55% | 68% |
+
+Taking the low end of that flat range is free on a mature repo and buys back the
+small or young one, where a single file can appear in most commits and a higher
+floor would suppress coupling that is perfectly real.
+
 **Bulk commits dropped.** A reformat, a vendor drop or a licence-header sweep couples everything to everything. Commits above 50 files are the largest single source of noise in a co-change model, and are ignored.
 
 Renames are followed, so history survives a file being moved. The model is cached in `.git/forgot/` — invisible to `git status`, keyed to `HEAD`, rebuilt when it goes stale.
@@ -154,7 +170,7 @@ Everything is a flag; nothing is required. The defaults are what the benchmark a
 | `--fail-under` | `0.75` | exit 1 only at or above this confidence |
 | `--warn-only` | off | always exit 0 |
 | `--min-confidence` | `0.4` | floor for mentioning a file at all |
-| `--min-lift` | `1.5` | how far above its base rate a file must co-occur |
+| `--min-lift` | `1.2` | how far above its base rate a file must co-occur |
 | `--min-support` | `5` | commits a file needs before it may suggest anything |
 | `--min-co-count` | `3` | commits a pairing needs |
 | `--top-k` | `5` | most files to name |

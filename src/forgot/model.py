@@ -7,6 +7,13 @@ Two guards do most of the work of keeping suggestions honest:
   removes files that are merely popular rather than genuinely coupled.
 * **time decay** - a repo's shape changes. A pairing that held for 200 commits
   two years ago but none since should not outrank one that has held all month.
+
+The thresholds come from `bench/sweep.py` rather than from taste. The lift floor
+sits at 1.2 because anything from 1.0 to 1.5 scores identically on real repos --
+their base rates are too low for the guard to bind -- while a floor above 1.5
+starts costing real coverage. The low end of that flat range is therefore free,
+and it buys back the small or young repo, where one file can appear in most
+commits and a higher floor would suppress genuine coupling.
 """
 
 from __future__ import annotations
@@ -25,7 +32,7 @@ Combiner = Literal["max", "noisy-or", "mean"]
 DEFAULT_HALF_LIFE_DAYS = 180.0
 DEFAULT_MIN_SUPPORT = 5
 DEFAULT_MIN_CO_COUNT = 3
-DEFAULT_MIN_LIFT = 1.5
+DEFAULT_MIN_LIFT = 1.2
 DEFAULT_MIN_CONFIDENCE = 0.4
 DEFAULT_TOP_K = 5
 SCHEMA_VERSION = 1
