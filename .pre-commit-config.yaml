@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: forgot
+        name: forgot
+        entry: forgot check
+        language: system
+        pass_filenames: true
+        require_serial: true

@@ -1,0 +1,17 @@
+- id: forgot
+  name: forgot
+  description: Name the files that usually change alongside the ones you staged.
+  entry: forgot check
+  language: python
+  pass_filenames: true
+  require_serial: true
+  stages: [pre-commit]
+
+- id: forgot-warn
+  name: forgot (warn only)
+  description: Same check, but never blocks the commit.
+  entry: forgot check --warn-only
+  language: python
+  pass_filenames: true
+  require_serial: true
+  stages: [pre-commit]
