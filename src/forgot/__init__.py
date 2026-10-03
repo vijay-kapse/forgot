@@ -1,6 +1,6 @@
 """forgot - name the files that usually change alongside the ones you staged."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .history import Commit, read_commits
 from .model import CoChangeModel, Suggestion

@@ -121,3 +121,55 @@ def test_empty_model_is_harmless():
     assert model.suggest(["anything.py"]) == []
     assert model.prior("anything.py") == 0.0
     assert math.isfinite(model.total_weight)
+
+
+def test_pruning_never_changes_a_suggestion():
+    """The load-time optimisation must be invisible in the output.
+
+    Pairs below `min_co_count` are filtered at suggest time anyway, so dropping
+    them at build time can only shrink the model, never alter a result.
+    """
+    spec = [["a.py", "a_test.py"]] * 20 + [["a.py", "rare.py"]]
+    spec += [["b.py", "b_test.py"]] * 15 + [["b.py", "oneoff.py"]]
+    spec += filler(60)
+    commits_ = commits(spec)
+    now = 1_000_000 + 200 * 3600
+    exists = {"a_test.py", "rare.py", "b_test.py", "oneoff.py"}
+
+    full = CoChangeModel.build(commits_, now=now, prune_below=1)
+    pruned = CoChangeModel.build(commits_, now=now, prune_below=3)
+
+    for staged in (["a.py"], ["b.py"], ["a.py", "b.py"]):
+        assert [s.to_dict() for s in full.suggest(staged, exists=exists, min_co_count=3)] == \
+               [s.to_dict() for s in pruned.suggest(staged, exists=exists, min_co_count=3)]
+
+
+def test_pruning_actually_shrinks_the_model():
+    spec = [["a.py", "a_test.py"]] * 20 + filler(60)
+    # Each filler commit pairs nothing, but one-off pairings accumulate here.
+    spec += [[f"x{i}.py", f"y{i}.py"] for i in range(40)]
+    commits_ = commits(spec)
+    full = CoChangeModel.build(commits_, now=1_000_000 + 200 * 3600, prune_below=1)
+    pruned = CoChangeModel.build(commits_, now=1_000_000 + 200 * 3600, prune_below=3)
+    count = lambda m: sum(len(v) for v in m.raw_pairs.values())
+    assert count(pruned) < count(full)
+    # Priors must survive pruning: they are computed from support, not pairs.
+    assert pruned.prior("a_test.py") == full.prior("a_test.py")
+
+
+def test_suggest_cannot_ask_for_pairs_the_model_dropped():
+    spec = [["a.py", "a_test.py"]] * 20 + filler(40)
+    model = CoChangeModel.build(commits(spec), now=1_000_000 + 100 * 3600, prune_below=5)
+    # Asking for a floor below what was kept is silently raised to it rather
+    # than silently returning wrong counts.
+    out = model.suggest(["a.py"], exists={"a_test.py"}, min_co_count=1)
+    assert out and out[0].evidence.co_commits >= 5
+
+
+def test_prune_below_survives_serialisation():
+    model = CoChangeModel.build(commits([["a.py", "b.py"]] * 5), prune_below=3)
+    assert CoChangeModel.from_dict(model.to_dict()).prune_below == 3
+    # Models cached before this field existed must still load.
+    data = model.to_dict()
+    del data["prune_below"]
+    assert CoChangeModel.from_dict(data).prune_below == 1

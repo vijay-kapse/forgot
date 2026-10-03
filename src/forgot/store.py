@@ -27,8 +27,10 @@ def _cache_path(repo: str) -> str:
     return os.path.join(git_dir, "forgot", "model.json")
 
 
-def _fingerprint(repo: str, max_commits: int, half_life_days: float, max_files: int) -> str:
-    key = f"{head_sha(repo)}|{max_commits}|{half_life_days}|{max_files}"
+def _fingerprint(
+    repo: str, max_commits: int, half_life_days: float, max_files: int, prune_below: int
+) -> str:
+    key = f"{head_sha(repo)}|{max_commits}|{half_life_days}|{max_files}|{prune_below}"
     return hashlib.sha256(key.encode()).hexdigest()[:16]
 
 
@@ -37,9 +39,12 @@ def load_model(
     max_commits: int = 5000,
     half_life_days: float = 180.0,
     max_files_per_commit: int = 50,
+    prune_below: int = 1,
     use_cache: bool = True,
 ) -> CoChangeModel:
-    fingerprint = _fingerprint(repo, max_commits, half_life_days, max_files_per_commit)
+    fingerprint = _fingerprint(
+        repo, max_commits, half_life_days, max_files_per_commit, prune_below
+    )
     path = _cache_path(repo)
 
     if use_cache and path and os.path.exists(path):
@@ -52,7 +57,9 @@ def load_model(
             pass  # a bad cache is never worth failing a commit over
 
     commits = read_commits(repo, max_commits, max_files_per_commit)
-    model = CoChangeModel.build(commits, half_life_days=half_life_days)
+    model = CoChangeModel.build(
+        commits, half_life_days=half_life_days, prune_below=prune_below
+    )
 
     if use_cache and path:
         try:

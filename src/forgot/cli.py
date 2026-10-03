@@ -88,6 +88,9 @@ def _model_kwargs(args: argparse.Namespace) -> dict:
         "max_commits": args.max_commits,
         "half_life_days": args.half_life,
         "max_files_per_commit": args.max_files_per_commit,
+        # Pairs below the runtime floor can never be suggested, so there is no
+        # reason to carry them in the cached model.
+        "prune_below": args.min_co_count,
         "use_cache": not args.no_cache,
     }
 

@@ -11,6 +11,9 @@
 - **Every number is reproducible.** The README's benchmark table comes out of
   `python bench/benchmark.py`. If you change the model, regenerate it; never
   hand-edit a figure.
+- **Pruning is behaviour-preserving.** `prune_below` drops pairs that `suggest`
+  would filter out anyway. If you change `min_co_count` handling, keep the two in
+  lockstep and keep `test_pruning_never_changes_a_suggestion` passing.
 - **Keep the baselines strong.** `popularity` and `naming` in `src/forgot/evaluate.py`
   exist to challenge the model. Weakening one to make the model look better is
   the worst thing you could do to this project.

@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from typing import Callable, Sequence
 
 from .history import Commit, read_commits
-from .model import CoChangeModel
+from .model import DEFAULT_MIN_CO_COUNT, CoChangeModel
 
 Strategy = Callable[[list[str], set[str], int], list[str]]
 
@@ -123,9 +123,12 @@ def _shared_prefix(a: str, b: str) -> int:
 def build_strategies(train: Sequence[Commit], **model_kwargs) -> dict[str, Strategy]:
     now = max((c.timestamp for c in train), default=0)
     known_files = {path for commit in train for path in commit.files}
-    model = CoChangeModel.build(train, now=now, **{
-        k: v for k, v in model_kwargs.items() if k == "half_life_days"
-    })
+    model = CoChangeModel.build(
+        train,
+        now=now,
+        prune_below=model_kwargs.get("min_co_count", DEFAULT_MIN_CO_COUNT),
+        **{k: v for k, v in model_kwargs.items() if k == "half_life_days"},
+    )
     suggest_kwargs = {
         k: v for k, v in model_kwargs.items() if k != "half_life_days"
     }

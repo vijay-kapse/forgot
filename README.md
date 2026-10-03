@@ -35,7 +35,7 @@ As a [pre-commit](https://pre-commit.com) hook, which is where it earns its keep
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/vijay-kapse/forgot
-    rev: v0.1.0
+    rev: v0.1.1
     hooks:
       - id: forgot          # blocks only on high-confidence misses
       # - id: forgot-warn   # same check, never blocks
@@ -74,7 +74,7 @@ Baselines, both deliberately given their best shot: `popularity` always names th
 | `pytest` | Python | 17,787 | 42% | 50% | 24% | **61%** | 34% | 32% |
 | `django` | Python | 34,964 | 57% | 40% | 25% | **55%** | 16% | 17% |
 | `fastapi` | Python | 7,776 | 40% | 65% | 39% | **76%** | 39% | 0% |
-| `prettier` | JS/TS | 11,937 | 64% | 69% | 51% | **77%** | 52% | 1% |
+| `prettier` | JS/TS | 11,937 | 65% | 69% | 51% | **77%** | 52% | 1% |
 | `gin` | Go | 2,020 | 70% | 66% | 55% | **77%** | 46% | 57% |
 | **mean** | | | **51%** | **59%** | **38%** | **70%** | 42% | 22% |
 
@@ -93,6 +93,33 @@ Or on your own repo, which is the number you should actually care about:
 ```bash
 forgot eval
 ```
+
+## Prior work
+
+This mechanism is not new, and it would be dishonest to present it as such.
+
+[**Mining Version Histories to Guide Software Changes**](https://www.st.cs.uni-saarland.de/papers/icse2004/?lang=en)
+(Zimmermann, Weißgerber, Diehl, Zeller — ICSE 2004) did this twenty-two years
+ago with the tool ROSE: *"Programmers who changed these functions also
+changed..."*, motivated explicitly by preventing **errors due to incomplete
+changes**. [Ying, Murphy, Ng and Chu-Carroll](https://research.ibm.com/publications/predicting-source-code-changes-by-mining-change-history)
+reached the same idea independently that year (IEEE TSE 30(9), 2004). The
+Eclipse plugin built on ROSE, eROSE, is now
+[archived](https://www.st.cs.uni-saarland.de/softevo/erose/?lang=en).
+
+Their numbers and the ones above are **not directly comparable** — different `k`,
+era, corpus, granularity and conditioning — and no claim of parity or improvement
+is made here.
+
+What is new is not the algorithm. It is that the reader changed: a human who has
+worked in a repo for six months already knows what moves together, which is why a
+good 2004 idea stayed marginal. A coding agent knows none of it and forgets
+between sessions. The cost changed too — eROSE's documented blocker was a
+database build that "takes a while and cannot be interrupted"; this builds in
+0.5–3s and loads from cache in about 0.2s.
+
+**[docs/FINDING.md](docs/FINDING.md)** has the full write-up: method, baselines,
+threats to validity, and the question this does not answer.
 
 ## How it works
 

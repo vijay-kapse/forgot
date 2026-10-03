@@ -79,6 +79,10 @@ class CoChangeModel:
     raw_support: dict[str, int] = field(default_factory=dict)
     raw_pairs: dict[str, dict[str, int]] = field(default_factory=dict)
     n_commits: int = 0
+    # Pairs seen fewer times than this were dropped at build time. `suggest`
+    # filters them out anyway, so dropping them cannot change any result -- it
+    # only keeps the model small enough to load quickly on the commit path.
+    prune_below: int = 1
 
     @classmethod
     def build(
@@ -86,6 +90,7 @@ class CoChangeModel:
         commits: Iterable[Commit],
         half_life_days: float = DEFAULT_HALF_LIFE_DAYS,
         now: float | None = None,
+        prune_below: int = 1,
     ) -> "CoChangeModel":
         now = time.time() if now is None else now
         support: dict[str, float] = defaultdict(float)
@@ -113,13 +118,25 @@ class CoChangeModel:
                         pairs[a][b] += weight
                         raw_pairs[a][b] += 1
 
+        # In a real repo 90%+ of observed pairings are one-off coincidences that
+        # can never clear min_co_count. Keeping them costs load time on every
+        # commit and buys nothing.
+        kept_pairs: dict[str, dict[str, float]] = {}
+        kept_raw: dict[str, dict[str, int]] = {}
+        for a, bs in raw_pairs.items():
+            keep = {b: c for b, c in bs.items() if c >= prune_below}
+            if keep:
+                kept_raw[a] = keep
+                kept_pairs[a] = {b: pairs[a][b] for b in keep}
+
         return cls(
             support=dict(support),
-            pairs={a: dict(bs) for a, bs in pairs.items()},
+            pairs=kept_pairs,
             total_weight=total_weight,
             raw_support=dict(raw_support),
-            raw_pairs={a: dict(bs) for a, bs in raw_pairs.items()},
+            raw_pairs=kept_raw,
             n_commits=n_commits,
+            prune_below=prune_below,
         )
 
     def prior(self, path: str) -> float:
@@ -139,6 +156,9 @@ class CoChangeModel:
         min_confidence: float = DEFAULT_MIN_CONFIDENCE,
         combine: Combiner = "noisy-or",
     ) -> list[Suggestion]:
+        if min_co_count < self.prune_below:
+            # The model no longer holds the pairs this would ask for.
+            min_co_count = self.prune_below
         staged_set = set(staged)
         # Per candidate: the confidence contributed by each staged file, plus
         # the strongest single pairing to quote as evidence.
@@ -194,6 +214,7 @@ class CoChangeModel:
             "raw_support": self.raw_support,
             "raw_pairs": self.raw_pairs,
             "n_commits": self.n_commits,
+            "prune_below": self.prune_below,
         }
 
     @classmethod
@@ -207,6 +228,7 @@ class CoChangeModel:
             raw_support=data["raw_support"],
             raw_pairs=data["raw_pairs"],
             n_commits=data["n_commits"],
+            prune_below=data.get("prune_below", 1),
         )
 
 
