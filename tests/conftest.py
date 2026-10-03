@@ -28,6 +28,10 @@ def _build(path):
     _git(path, "init", "-q")
     _git(path, "config", "user.email", "test@example.com")
     _git(path, "config", "user.name", "Test")
+    # Background maintenance writes transient lock files under .git/objects,
+    # which race with copying the template and made CI flaky.
+    _git(path, "config", "gc.auto", "0")
+    _git(path, "config", "maintenance.auto", "false")
 
     base = int(time.time()) - 86400 * 120
     counter = 0
@@ -93,7 +97,9 @@ def _template(tmp_path_factory):
 def repo(_template, tmp_path):
     """A fresh writable copy of the template repo (building it is the slow part)."""
     target = tmp_path / "repo"
-    shutil.copytree(_template, target)
+    # Lock files are never worth copying, and git may delete one between
+    # listing the directory and reading it.
+    shutil.copytree(_template, target, ignore=shutil.ignore_patterns("*.lock"))
     cache = target / ".git" / "forgot"
     if cache.exists():
         shutil.rmtree(cache)
