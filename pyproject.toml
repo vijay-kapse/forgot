@@ -9,7 +9,7 @@ description = "Name the files that usually change alongside the ones you staged.
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
-authors = [{ name = "Vijay" }]
+authors = [{ name = "Vijay Kapse", email = "vijayskofficial@gmail.com" }]
 keywords = ["git", "pre-commit", "co-change", "coupling", "code-review", "ai-agents"]
 classifiers = [
   "Development Status :: 4 - Beta",
