@@ -34,7 +34,7 @@ As a [pre-commit](https://pre-commit.com) hook, which is where it earns its keep
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/vijaysk/forgot
+  - repo: https://github.com/vijay-kapse/forgot
     rev: v0.1.0
     hooks:
       - id: forgot          # blocks only on high-confidence misses

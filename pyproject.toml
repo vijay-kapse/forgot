@@ -23,8 +23,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/vijaysk/forgot"
-Issues = "https://github.com/vijaysk/forgot/issues"
+Homepage = "https://github.com/vijay-kapse/forgot"
+Issues = "https://github.com/vijay-kapse/forgot/issues"
 
 [project.scripts]
 forgot = "forgot.cli:main"
