@@ -202,16 +202,24 @@ and human work overlap, stratified by commit size and subsystem. Two outcomes:
 of those files is genuinely touched within the next 7 days). Significance by
 permuting the agent label within strata.
 
-**Result, 5 repositories, 749 agent against 2,443 human commits:**
+**Result, 7 repositories, 982 agent against 2,992 human commits:**
 
-| outcome | agent | human | difference | p |
-|---|---|---|---|---|
-| flagged | 37.8% | 44.4% | −2.1% | 0.31 |
-| confirmed | 26.0% | 29.0% | +2.2% | 0.24 |
+| outcome | agent | human | stratified difference | 95% CI | p |
+|---|---|---|---|---|---|
+| flagged | 47.4% | 42.2% | −0.3% | −3.7% to +3.3% | 0.89 |
+| confirmed | 37.6% | 28.9% | +3.0% | −0.1% to +6.5% | 0.06 |
 
-**No detectable difference**, on either outcome, and the two point in opposite
-directions. This is preliminary — the noise floor is about ±4% and the sample is
-five repositories — but nothing so far supports the motivating claim.
+Whether the tool complains at all is flat. Whether the complaint was *justified*
+leans against agents by three points and misses significance, with a confidence
+interval that just touches zero. So the motivating claim is not established, but
+the more meaningful of the two outcomes is no longer comfortably null either, and
+it moved toward the effect as repositories were added — from +2.2% (p = 0.24) at
+five repositories to +3.0% (p = 0.06) at seven.
+
+The right description is **underpowered and unresolved**, not **refuted**. Per-repo
+estimates still range from −15.5% to +10.8%, which is a lot of heterogeneity for
+seven repositories. Settling it needs the rest of the usable sample, and the
+honest thing to do in the meantime is not to build an argument on either answer.
 
 ### Four ways this study silently breaks
 

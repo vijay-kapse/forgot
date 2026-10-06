@@ -27,7 +27,7 @@ People absorb that by working in a repo for months. A coding agent arrives with 
 
 `forgot` recovers that knowledge from the one place it is already written down — the commit history — and spends it at the only moment it matters, the commit itself. It is useful to anyone committing into a repo they do not hold entirely in their head.
 
-**One claim this project does not make.** An earlier version of this README asserted that incomplete commits are the *characteristic* failure of coding agents. Testing that against 749 agent-authored and 2,443 human-authored commits found **no detectable difference** in how often either omits a co-changing file. The write-up has the numbers and the caveats; the honest position is that this is a general tool, not an agent-era necessity.
+**One claim this project does not make.** An earlier version of this README asserted that incomplete commits are the *characteristic* failure of coding agents. Tested against 982 agent-authored and 2,992 human-authored commits across seven repositories, that does not hold: whether the tool would complain at all is flat (−0.3%, p = 0.89), and whether the omission was real trends slightly against agents but misses significance (+3.0%, p = 0.06). The write-up has the numbers and the caveats; the honest position is that this is a general tool, not an agent-era necessity.
 
 ## Install
 
@@ -86,9 +86,9 @@ Baselines, both deliberately given their best shot: `popularity` always names th
 
 The benchmark asks whether the model can reconstruct a commit it was not shown. A
 second, harsher question is whether its warnings correspond to work that really
-was outstanding. Across 1,480 commits it flagged in five other repositories, a
-file it named was genuinely touched within the next 7 days **65.4% of the time**
-(range 59–75% per repo). So about two thirds of what it complains about is work
+was outstanding. Across 1,861 commits it flagged in seven other repositories, a
+file it named was genuinely touched within the next 7 days **70.4% of the time**
+(range 59–97% per repo). So about two thirds of what it complains about is work
 that did in fact still need doing.
 
 So: it speaks on about half of all edits, and when it speaks it correctly names a genuinely missing file **70% of the time** — against 42% for naming the repo's busiest files and 22% for test-naming conventions.
