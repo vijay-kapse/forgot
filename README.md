@@ -23,9 +23,11 @@ That is real output from `gin-gonic/gin`.
 
 A codebase carries knowledge that is in none of its files: *these things change together*. Edit the serializer, bump the schema. Touch the public helper, add a changelog line. Change the workflow, change its sibling workflow.
 
-People absorb that by working in a repo for months. A coding agent arrives with none of it, and so its characteristic failure is not broken syntax — it is **work that is complete-looking but partial**. The patch is right and the commit is short one file. CI finds out; the reviewer finds out; the agent does not.
+People absorb that by working in a repo for months. A coding agent arrives with none of it and loses what it learns between sessions, so it has to infer from the code what the history already records.
 
-`forgot` recovers that knowledge from the one place it is already written down — the commit history — and spends it at the only moment it matters, the commit itself.
+`forgot` recovers that knowledge from the one place it is already written down — the commit history — and spends it at the only moment it matters, the commit itself. It is useful to anyone committing into a repo they do not hold entirely in their head.
+
+**One claim this project does not make.** An earlier version of this README asserted that incomplete commits are the *characteristic* failure of coding agents. Testing that against 749 agent-authored and 2,443 human-authored commits found **no detectable difference** in how often either omits a co-changing file. The write-up has the numbers and the caveats; the honest position is that this is a general tool, not an agent-era necessity.
 
 ## Install
 
@@ -79,6 +81,15 @@ Baselines, both deliberately given their best shot: `popularity` always names th
 | **mean** | | | **51%** | **59%** | **38%** | **70%** | 42% | 22% |
 
 16,398 held-out queries across 7 repositories.
+
+### And in the field
+
+The benchmark asks whether the model can reconstruct a commit it was not shown. A
+second, harsher question is whether its warnings correspond to work that really
+was outstanding. Across 1,480 commits it flagged in five other repositories, a
+file it named was genuinely touched within the next 7 days **65.4% of the time**
+(range 59–75% per repo). So about two thirds of what it complains about is work
+that did in fact still need doing.
 
 So: it speaks on about half of all edits, and when it speaks it correctly names a genuinely missing file **70% of the time** — against 42% for naming the repo's busiest files and 22% for test-naming conventions.
 

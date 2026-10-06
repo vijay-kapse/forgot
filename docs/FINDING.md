@@ -72,10 +72,11 @@ that arrive with none of that tacit knowledge and lose what they learn between
 sessions. A [2026 census of 180 million repositories](https://arxiv.org/pdf/2606.24429)
 reports GitHub Copilot's SWE agent at ~1.13M commits across 85,739 projects, and
 Claude Code at ~850k commits across 17,295 projects between March and November
-2025. For that reader the recommendation is not a reminder — it is information it
-could not otherwise have. Agents' characteristic failure is not broken syntax but
-**work that looks complete and is partial**, which is precisely the failure ROSE
-set out to prevent.
+2025. For that reader the recommendation is not a reminder — it is information it could
+not otherwise have.
+
+It is tempting to go further and claim agents therefore *ship* more incomplete
+commits than people do. That claim is tested below, and so far it does not hold.
 
 **The cost changed.** eROSE's documented practical blocker was that building its
 database "takes a while and cannot be interrupted," with the authors recommending
@@ -132,6 +133,15 @@ Thresholds come from a sweep (`bench/sweep.py`), not from taste.
 
 16,398 held-out queries.
 
+### A second check, in the field
+
+The benchmark asks whether the model can reconstruct a commit it was never shown.
+A harsher question is whether its warnings point at work that really was
+outstanding. Across 1,480 commits it flagged in five further repositories, a file
+it named was genuinely touched within the next 7 days **65.4% of the time**
+(968/1,480; 59–75% per repo). Roughly two thirds of what it complains about
+turns out to be work that still needed doing.
+
 ### The baselines were given their best shot
 
 A weak baseline is the easiest way to lie with a benchmark, so both are stronger
@@ -174,29 +184,72 @@ The co-change model beats both on every repository.
   The benchmark is therefore pessimistic in one direction and artificial in
   another.
 
-## The question this does not answer
+## Testing the motivation: do agent commits omit more?
 
-The motivating claim — that agents miss co-changing files more often than humans
-do — is **asserted here, not measured**. It is plausible and it is testable, and
-the data to test it is public: the agent-commit census above identifies millions
-of agent-authored commits across tens of thousands of projects.
+The claim above — that agents ship more incomplete commits — is the one that
+would justify calling this an agent-era tool rather than a general one. It is
+testable, so it was tested.
 
-The experiment: partition a repository's history into agent-authored and
-human-authored commits, then compare how often each kind omits a file the model
-predicted with high confidence, controlling for commit size and subsystem. If
-agent commits are measurably more incomplete, the motivation stops being a story
-and becomes a result. If they are not, that is worth knowing too, and this tool
-is a general convenience rather than an agent-era one.
+**Labels.** [AIDev](https://huggingface.co/datasets/hao-li/AIDev) (Li et al.)
+publishes 932,791 pull requests opened by Codex, Devin, Copilot, Cursor, Claude
+Code and Jules. Restricted to merged PRs in non-fork repositories, that is
+139,300 agent commits across 3,998 repositories.
 
-That is the interesting paper here. This repository is the instrument.
+**Design.** Within one repository, train the co-change model only on history
+*before* its first agent commit, then evaluate commits in the window where agent
+and human work overlap, stratified by commit size and subsystem. Two outcomes:
+*flagged* (the model names a file the commit did not touch) and *confirmed* (one
+of those files is genuinely touched within the next 7 days). Significance by
+permuting the agent label within strata.
+
+**Result, 5 repositories, 749 agent against 2,443 human commits:**
+
+| outcome | agent | human | difference | p |
+|---|---|---|---|---|
+| flagged | 37.8% | 44.4% | −2.1% | 0.31 |
+| confirmed | 26.0% | 29.0% | +2.2% | 0.24 |
+
+**No detectable difference**, on either outcome, and the two point in opposite
+directions. This is preliminary — the noise floor is about ±4% and the sample is
+five repositories — but nothing so far supports the motivating claim.
+
+### Four ways this study silently breaks
+
+Recorded because each one produced a plausible, wrong answer before being caught.
+
+1. **Matching on AIDev's commit SHAs finds nothing.** Squash-merging rewrites
+   them; on mlflow the overlap with its own default branch is 0 of 1,334. Match
+   on the PR number in the commit subject instead.
+2. **`--no-merges` erases merge-commit projects.** There the PR reference lives
+   only on the merge commit. liam has 2,986 of them and matched zero until the
+   walk changed to `--first-parent`, which also makes squash and merge projects
+   directly comparable.
+3. **Dependency bots must be excluded from the control group.** A Renovate PR
+   bumps `package.json` and every lockfile — the most coupled file set in the
+   repo — so it is flagged almost every time. liam's history is 20.6% such
+   commits against mlflow's 1.0%. Leaving them in produced a confident
+   **−18.5%, p = 0.001** that collapsed to −0.7%, p = 0.78 once removed.
+4. **Projects that adopted agents at inception are unusable**, having no
+   pre-agent history to train on. OpenIsle has one pre-agent commit, gh-aw
+   twenty. Roughly 40% of candidate repositories survive these filters.
+
+### What this cannot settle
+
+Silent agents put a floor under it. Copilot leaves a commit-level trace in under
+0.5% of its commits and Cursor in none, so the human control group contains an
+unknown mass of agent work. That biases toward the null — it makes a positive
+finding conservative and a null finding weak evidence rather than strong. A clean
+answer needs either agent labels that do not depend on self-disclosure, or a
+setting where the tool is known.
 
 ## Reproduce
 
 ```bash
 pip install forgot
 git clone https://github.com/vijay-kapse/forgot && cd forgot
-python bench/benchmark.py     # the table above, clones included
+python bench/benchmark.py     # the results table, clones included
 python bench/sweep.py         # the threshold sweep behind the defaults
+python bench/agent_study.py   # the agent-vs-human study (see its header)
 forgot eval                   # the only number that matters: your repo
 ```
 
@@ -208,5 +261,7 @@ forgot eval                   # the only number that matters: your repo
    Code Changes by Mining Change History.* IEEE TSE 30(9):574–586, 2004.
 3. T. Zimmermann. *eROSE: Guiding Programmers in Eclipse.* OOPSLA 2005
    (companion). Project page archived.
-4. *Detecting AI Coding Agents in Open Source: A Validated Multi-Method Census
-   of 180 Million Repositories.* arXiv:2606.24429, 2026.
+4. A. Khosravani, A. Mockus. *Detecting AI Coding Agents in Open Source: A
+   Validated Multi-Method Census of 180 Million Repositories.* arXiv:2606.24429, 2026.
+5. H. Li et al. *AIDev: Studying AI Coding Agents on GitHub.* arXiv:2602.09185,
+   2026. Dataset: https://huggingface.co/datasets/hao-li/AIDev
